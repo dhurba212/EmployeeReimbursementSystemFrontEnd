@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+ 
+    <link rel="stylesheet" href="employee.css">
+    <title>Expense Reimbursement System</title>
+</head>
+<body>
+    
+
+    <div class="heading">
+        <h2>Expense Reimbursement System </h2>
+        <h5>for employees</h5>
+    
+        <div id="outer">
+            <button class="inner" onclick="getAllExpenses()">getallexpense</button>
+            <button class="inner" onclick="getExpensesByStatus('approved')">Approved Expenses</button>
+            <button class="inner" onclick="getExpensesByStatus('denied')">Denied Expenses</button>
+            <button class="inner" onclick="getExpensesByStatus('pending')">Pending Expenses</button>
+        </div>
+    </div>
+    
+    <div class="grid-container">
+        <div class="left">
+        
+      
+               
+        <table class="table table-hover">
+                  
+            <thead>
+                    <th>ExpenseId</th>
+                    <th>Amount </th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>EmployeeId</th>
+                    <th>ManagerId</th>
+                    <th>SubmittedDate</th>
+                    <th>DecisionDate</th>               
+            </thead>
+            <tbody id="allexpenses">
+
+            </tbody>
+        </table>
+    </div>
+    <div>
+
+    </div>
+
+    <div class="right">
+        <hp style="text-align: center;"><b>Submit expenses</b></p>
+       
+        <label for="amount"><b>Amount</b></label>
+        <input id="amount" type="text" placeholder="Enter Amount">
+
+        <label for="reason"><b>Reason</b></label>
+        <input id="reason" type="text" placeholder="Enter Reason">
+
+        <!-- <label for="employeeid">Employee Id</label>
+        <input id="employeeid" type="text" placeholder="Enter Id"> -->
+
+        <button id="submitbutton"onclick="createExpense()">Submit</button>
+    </div>    
+    </div>
+
+<hr>
+<br>
+<br>
+   
+
+
+    
+</body>
+<script>
+    
+    const allexpenses = document.getElementById("allexpenses");
+    const amountInput = document.getElementById("amount");
+    const reasonInput = document.getElementById("reason");
+    const employeeidInput = document.getElementById("employeeid")
+
+    const expenseIdInput = document.getElementById("expenseid")
+    const statusInput = document.getElementById("status")
+    const managerIdInput = document.getElementById("managerid")
+    const id =localStorage.getItem("userid")
+
+    getAllExpenses();
+    async function getAllExpenses()
+    {
+        const details = {
+            method:"get",
+            headers:{
+                "Authorization":localStorage.getItem("jwt")
+            }
+            
+        }
+        
+        const httpResponse = await fetch(`http://localhost:7000/employees/${id}/expenses`,details);
+         
+        let expenses = await httpResponse.json();
+        expenses.sort((a,b)=>(a.expenseId>b.expenseId)?1:-1)
+        
+        let innerbodyHtml =``;
+        for(let expense of expenses )
+        {
+            innerbodyHtml+=`
+                <tr>
+                    <td>${expense.expenseId}</td>
+                    <td>${formatAmount(expense.amount)}</td>
+                    <td>${expense.reason}</td>
+                    <td>${expense.status}</td>
+                    <td>${expense.employeeId}</td>
+                    <td>${expense.managerId}</td>
+                    <td>${epochTimeToNormal(expense.submittedDate)}</td>
+                    <td>${epochTimeToNormal(expense.decisionDate)}</td>
+                </tr>
+             `;
+         }
+         allexpenses.innerHTML=innerbodyHtml;
+         
+    }
+
+    async function createExpense()
+    {
+        if(amountInput.value===""||reasonInput.value==="")
+        {
+            alert("Input Fields Cant Be Empty")
+        }
+        else{
+
+        
+        reasonInput.value
+        
+        const expense={  
+            amount:parseInt(amountInput.value),
+            reason:reasonInput.value,
+            //employeeId:parseInt(employeeidInput.value)
+            employeeId:id
+        }
+        const details ={
+            method:"post",
+            body:JSON.stringify(expense),
+            headers:{
+                "Authorization":localStorage.getItem("jwt")
+            } 
+        }
+
+        const htttpRequest = await fetch("http://localhost:7000/expenses",details)
+        const createdExpense = await htttpRequest.json();
+        
+        getAllExpenses();
+
+        }
+    }
+
+    async function getExpensesByStatus(status)
+    {
+        const details={
+            method:"get",
+            headers:{
+                "Authorization":localStorage.getItem("jwt")
+            }
+        }
+        //http://localhost:7000/employees/1/expenses?status=approved
+        const httpRequest = await fetch(`http://localhost:7000/employees/${id}/expenses?status=${status}`,details)
+        const expenses = await httpRequest.json();
+        expenses.sort((a,b)=>(a.expenseId>b.expenseId)? 1 : -1)
+
+        let innerBodyHtml=``
+        for(let expense of expenses)
+        {
+            innerBodyHtml+=`
+                <tr>
+                    <td>${expense.expenseId}</td>
+                    <td>${formatAmount(expense.amount)}</td>
+                    <td>${expense.reason}</td>
+                    <td>${expense.status}</td>
+                    <td>${expense.employeeId}</td>
+                    <td>${expense.managerId}</td>
+                    <td>${epochTimeToNormal(expense.submittedDate)}</td>
+                    <td>${epochTimeToNormal(expense.decisionDate)}</td>
+                </tr> 
+             `
+        }
+        allexpenses.innerHTML=""
+        allexpenses.innerHTML=innerBodyHtml;
+    }
+    
+
+    
+
+    // async function updateExpense()
+    // {
+    //     const id=parseInt(expenseIdInput.value)
+    //     const expense = {
+    //         expenseId:id,
+    //         status: statusInput.value,
+    //         managerId:parseInt(managerIdInput.value)
+    //     }
+    //     const details ={
+    //         method:"put",
+    //         body:JSON.stringify(expense)
+    //     }
+    //     const httpRequest = await fetch(`http://localhost:7000/expenses/${id}`,details);
+    //     const result = await httpRequest.json();
+    //     console.log(result)
+    // }
+        function epochTimeToNormal(timeInSec)
+        {
+            const date = new Date(timeInSec);
+            const year = date.getFullYear()
+            let month = date.getMonth()+1
+            let day = date.getDate()
+            if((month+'').length<2)
+            {
+                month=''+0+month
+            }
+            if((day+'').length<2)
+            {
+                day=''+0+day
+            }
+            if (year==1969)
+            {
+                return `00:00:00`
+            }
+            return `${year}:${month}:${day}`
+        }
+    
+        function formatAmount(amount)
+        {
+            const decimalAmount = amount.toFixed(2)
+            return `$ ${decimalAmount}`
+        }
+
+
+
+
+</script>
+</html>

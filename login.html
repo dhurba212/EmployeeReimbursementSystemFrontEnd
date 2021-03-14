@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link rel="stylesheet" href="login.css">
+    <title>login </title>
+</head>
+<body>
+    <div id="background">
+        <div id="inputs">
+            <label for="username"><b>Username</b></label>
+            <input id="username" type="text">
+<br>
+<br>
+            <label for="password"><b>Password</b></label>
+            <input id="password" type="text">
+        
+<br>
+<br>
+            <button onclick="login()">Sign in</button>
+        </div>
+    </div>    
+</body>
+<script>
+
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password")
+    
+async function login()
+    {
+        const logincredentials={
+            username:usernameInput.value,
+            password:passwordInput.value
+        }
+        const details={
+            method:"post",
+            body:JSON.stringify(logincredentials)
+        }
+        const httpRequest = await fetch("http://localhost:7000/logins",details)
+        const jwt = await httpRequest.text();
+        const user = JSON.parse(atob(jwt.split('.')[1]));//provides the body of jwt
+        const role = user.role;
+        const id = user.id;
+
+        localStorage.setItem("jwt",jwt)
+        localStorage.setItem("userid",id)
+        console.log(localStorage.getItem("jwt"))
+        console.log(localStorage.getItem("userid"))
+        
+        
+         if(role=="employee")
+        {
+            window.location.href="file:///C:/Revature2/GitHubbed/EmployeeReimbursementSystemFrontEnd/employee.html"
+            
+        }
+        else if(role=="manager")
+        {
+            window.location.href="file:///C:/Revature2/GitHubbed/EmployeeReimbursementSystemFrontEnd/manager.html"
+        }
+       
+         
+         //const JWT = localStorage.getItem("jwt")
+         
+
+    }
+    // breakDownJwt(token)
+    // {
+    //     const indexofjwt = token.indexOf("ey");
+    //     const jwt=token.substring(indexofjwt);
+
+        
+    // }
+
+
+
+
+</script>
+
+
+
+
+
+</html>
+
+
+

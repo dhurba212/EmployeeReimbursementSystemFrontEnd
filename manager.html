@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link rel="stylesheet" href="manager.css">
+    <title>manager</title>
+</head>
+<body>
+    <div class="background">
+        <div class="innerbackground">
+
+    <div class="heading">
+        <h2>Expense Reimbursement System </h2>
+            <h5>Review expenses of employees</h5>
+
+    <button onclick="getAllExpenses()">All Expenses</button>
+    <button onclick="getAllPendingApprovedOrDeniedExpenses('pending')">All Pending Expenses</button>
+    <button onclick="getAllPendingApprovedOrDeniedExpenses('denied')">All Denied Expenses</button>
+    <button onclick="getAllPendingApprovedOrDeniedExpenses('approved')">All Approved Expenses</button>
+
+    </div>
+
+
+    <div class="expensetable">
+        <p><b>Expenses Of All Employees</b></p>
+    <table class="table table-hover">
+        
+        <thead>
+                <th>ExpenseId</th>
+                <th>Amount </th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>EmployeeId</th>
+                <th>ManagerId</th>
+                <th>SubmittedDate</th>
+                <th>DecisionDate</th> 
+                <th>Change Status</th>  
+                <th>Change Status</th>            
+        </thead>
+        <tbody id="allexpenses">
+
+        </tbody>
+    </table>
+    </div>
+    
+<hr>
+    <div class="update" >
+        <p class="updatetitle"><b>Update Expense</b></p>
+        
+        <label for="expenseid">Expense id</label>
+        <input id="expenseid" type="number" placeholder="Enter Expense id">
+
+<br>
+        <label for="forstatus">Status</label>
+        <select id="forstatus">
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+        </select>
+<br>   
+        
+        <!-- <label for="status">Status</label>
+        <input id="status" type="text" placeholder="approved or denied"> -->
+    
+
+        <label for="amount">Amount</label>
+        <input id="amount" type="number" placeholder="Enter amount">
+
+        <button class="updatebutton" onclick="updateExpense()">Update</button>
+    </div>
+
+    </div>
+
+</div>   
+</body>
+
+<script>
+    const allExpensesInput = document.getElementById("allexpenses");
+    const expenseIdInput = document.getElementById("expenseid");
+    //const statusInput = document.getElementById("status");
+    const amountInput = document.getElementById("amount");
+    const forStatusInput = document.getElementById("forstatus");
+
+    getAllExpenses();
+
+    async function getAllExpenses()
+    {
+        const details={
+            method:"get",
+            headers:{
+                "Authorization":localStorage.getItem("jwt")
+            }          
+        }
+        const httpRequest = await fetch("http://localhost:7000/expenses",details)
+        let expenses = await httpRequest.json();
+        expenses = expenses.sort((a, b) => (a.expenseId > b.expenseId) ? 1 : -1)
+        console.log(expenses)
+        let expenseListHtml=``;
+        for(let expense of expenses)
+        {
+            expenseListHtml+=`
+                <tr>
+                    <td>${expense.expenseId}</td>
+                    <td>${formatAmount(expense.amount)}</td>
+                    <td>${expense.reason}</td>
+                    <td>${expense.status}</td>
+                    <td>${expense.employeeId}</td>
+                    <td>${expense.managerId}</td>
+                    <td>${epochTimeToNormal(expense.submittedDate)}</td>
+                    <td>${epochTimeToNormal(expense.decisionDate)}</td>
+                    <td><button onclick="approveStatus(${expense.expenseId},${expense.amount})">Approve Status</button></td>
+                    <td><button onclick="denyStatus(${expense.expenseId},${expense.amount})">Deny Status</button></td>
+                </tr>
+            `
+        }
+            allExpensesInput.innerHTML=expenseListHtml;
+
+    }
+
+    async function getAllPendingApprovedOrDeniedExpenses(status)
+    {
+         
+        const details ={
+            method:"get",
+            headers:{
+                "Authorization":localStorage.getItem("jwt")
+            }
+        }
+        const httpRequest = await fetch(`http://localhost:7000/expenses?status=${status}`,details)
+        let expenses = await httpRequest.json();
+        expenses = expenses.sort((a,b)=>(a.expenseId>b.expenseId)? 1 : -1)
+        
+        if(expenses===undefined || expenses.length<1)
+        {
+            allExpensesInput.innerHTML=""
+            allExpensesInput.innerHTML=`<h3>No ${status} expenses </h3>`
+        }
+        else
+        {
+            let expenseListHtml=``
+            for(let expense of expenses)
+            {
+                expenseListHtml+=`
+                <tr>
+                    <td>${expense.expenseId}</td>
+                    <td>${formatAmount(expense.amount)}</td>
+                    <td>${expense.reason}</td>
+                    <td>${expense.status}</td>
+                    <td>${expense.employeeId}</td>
+                    <td>${expense.managerId}</td>
+                    <td>${epochTimeToNormal(expense.submittedDate)}</td>
+                    <td>${epochTimeToNormal(expense.decisionDate)}</td>
+                    <td><button onclick="approveStatus(${expense.expenseId},${expense.amount})">Approve Status</button></td>
+                    <td><button onclick="denyStatus(${expense.expenseId},${expense.amount})">Deny Status</button></td>
+                </tr>
+                `
+                console.log(`${expense.expenseId},${expense.amount}`)
+                allExpensesInput.innerHTML=""
+                allExpensesInput.innerHTML=expenseListHtml;
+
+                
+            }
+        }
+    }
+
+    
+    async function approveStatus(expenseid,amount)
+        {
+            console.log(expenseid)
+            console.log(amount)
+            
+            const updatedexpense = {
+                expenseId:expenseid,
+                status:"approved", 
+                amount:amount
+            }
+            const details ={
+                method:"put",
+                body:JSON.stringify(updatedexpense),
+                headers:{
+                    "Authorization":localStorage.getItem("jwt")
+                }
+            }
+            const httpRequest = await fetch(`http://localhost:7000/expenses/${expenseid}`,details)
+            const approvedExpense = await httpRequest.json();
+            //to reload the page after an update
+            getAllExpenses()
+        }
+
+    async function denyStatus(expenseid,amount)
+        {
+            console.log(`${expenseid} ${amount}`)
+            const updatedexpense = {
+                expenseId:expenseid,
+                status:"denied",
+                amount:amount
+            }
+            const details ={
+                method:"put",
+                body:JSON.stringify(updatedexpense),
+                headers:{
+                    "Authorization":localStorage.getItem("jwt")
+                }
+            }
+           const httpRequest = await fetch(`http://localhost:7000/expenses/${expenseid}`,details)
+           const deletedexpense = await httpRequest.json();
+            //roloading a page after an update
+           getAllExpenses()
+        }
+
+        function formatAmount(amount)
+        {
+            const decimalAmount = amount.toFixed(2)
+            return `$ ${decimalAmount}`
+        }
+
+        function epochTimeToNormal(timeInSec)
+        {
+            const date = new Date(timeInSec);
+            const year = date.getFullYear()
+            let month = date.getMonth()+1
+            let day = date.getDate()
+            if((month+'').length<2)
+            {
+                month=''+0+month
+            }
+            if((day+'').length<2)
+            {
+                day=''+0+day
+            }
+            if (year==1969)
+            {
+                return `00:00:00`
+            }
+            return `${year}:${month}:${day}`
+        }
+        
+        async function updateExpense()
+        {
+            const expenseIdValue = parseInt(expenseIdInput.value);
+            const statusValue = forStatusInput.value;
+            const amountValue = parseFloat(amountInput.value);
+
+            const expenseBody = {
+                expenseId:expenseIdValue,
+                status:statusValue,
+                amount:amountValue
+            }
+            const details = {
+                method:"put",
+                body:JSON.stringify(expenseBody),
+                headers: {
+                    "Authorization":localStorage.getItem("jwt")
+                }
+            }
+            const httpRequest = await fetch(`http://localhost:7000/expenses/${expenseIdValue}`,details)
+            const expense = await httpRequest.json()
+            console.log(expense)
+            alert(`Expense with id ${expenseIdValue} is updated`)
+
+            getAllExpenses();
+
+        }
+        
+
+
+</script>
+</html>

@@ -5,18 +5,58 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
-    <link rel="stylesheet" href="login.css">
+    <!-- <link rel="stylesheet" href="login.css"> -->
     <title>login </title>
+    <style>
+        body,html{
+            height: 100%;
+            background-color: rgb(163, 56, 56);
+        }
+
+        #background{
+            background-image: url("https://storage.googleapis.com/expensereimbursement/FCBBackground.png");
+            height: 100%; 
+            background-position: center; 
+            background-repeat: no-repeat;
+            background-size: cover; 
+            padding: 30px;
+     
+        }
+        #heading{
+            text-align: center;
+        }
+        #inputs{
+    
+            text-align: right;
+            margin: 30px;
+    
+        }
+        input{
+            border-radius: 10px;
+            border-style: none;
+            padding: 3px;
+            outline:none;
+        }
+        button{
+            padding: 5px;
+            border-radius: 10px;
+            outline-color: none;
+            outline-style: none;
+            cursor: pointer;
+    
+        }
+    </style>
 </head>
 <body>
     <div id="background">
+        <h2 id="heading">Expense Reimbursement System </h2>
         <div id="inputs">
             <label for="username"><b>Username</b></label>
             <input id="username" type="text">
 <br>
 <br>
             <label for="password"><b>Password</b></label>
-            <input id="password" type="text">
+            <input id="password" type="password">
         
 <br>
 <br>
@@ -24,6 +64,7 @@
         </div>
     </div>    
 </body>
+
 <script>
 
 const usernameInput = document.getElementById("username");
@@ -39,8 +80,15 @@ async function login()
             method:"post",
             body:JSON.stringify(logincredentials)
         }
-        const httpRequest = await fetch("http://localhost:7000/logins",details)
+        const httpRequest = await fetch("http://{port}/logins",details)
+        if(httpRequest.status===401)
+        {
+            alert("Invalid username or password")
+        }
+        else
+        {
         const jwt = await httpRequest.text();
+        
         const user = JSON.parse(atob(jwt.split('.')[1]));//provides the body of jwt
         const role = user.role;
         const id = user.id;
@@ -53,19 +101,16 @@ async function login()
         
          if(role=="employee")
         {
-            window.location.href="file:///C:/Revature2/GitHubbed/EmployeeReimbursementSystemFrontEnd/employee.html"
+            window.location.href="https://storage.googleapis.com/expensereimbursement/employee.html"
             
         }
         else if(role=="manager")
         {
-            window.location.href="file:///C:/Revature2/GitHubbed/EmployeeReimbursementSystemFrontEnd/manager.html"
+            window.location.href="https://storage.googleapis.com/expensereimbursement/manager.html"
         }
-       
-         
-         //const JWT = localStorage.getItem("jwt")
-         
 
     }
+}
     // breakDownJwt(token)
     // {
     //     const indexofjwt = token.indexOf("ey");
